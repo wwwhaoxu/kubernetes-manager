@@ -30,6 +30,6 @@ func NewKuberManagerCommand() *cobra.Command {
 
 // run 函数是实际的业务代码入口函数.
 func run() error {
-	fmt.Println("Hello MiniBlog!")
+	fmt.Println("Hello World!")
 	return nil
 }
