@@ -1,0 +1,11 @@
+# 日志配置
+log:
+  disable-caller: false
+  disable-stacktrace: false
+  level: debug
+  format: console
+  output-paths: [./tmp/km.log, stdout]
+
+# db配置
+db:
+  age: 20
