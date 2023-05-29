@@ -9,3 +9,6 @@ log:
 # db配置
 db:
   age: 20
+
+addr: :8080
+runmode: debug

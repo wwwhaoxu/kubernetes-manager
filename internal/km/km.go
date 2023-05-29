@@ -1,11 +1,21 @@
 package km
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"kubernetes-manager/internal/pkg/core"
+	"kubernetes-manager/internal/pkg/errno"
 	"kubernetes-manager/internal/pkg/log"
+	mw "kubernetes-manager/internal/pkg/middleware"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var cfgFile string
@@ -47,10 +57,49 @@ func NewKuberManagerCommand() *cobra.Command {
 
 // run 函数是实际的业务代码入口函数.
 func run() error {
-	settings, _ := json.Marshal(viper.AllSettings())
-	log.Infow(string(settings))
+	// 设置Gin模式
+	gin.SetMode(viper.GetString("runmode"))
 
-	log.Infow(viper.GetString("db.age"))
+	// 创建Gin引擎
+	g := gin.New()
+	mws := []gin.HandlerFunc{gin.Recovery(), mw.RequestID(), mw.Cors}
+	g.Use(mws...)
+
+	// 注册 404 Handler.
+	g.NoRoute(func(c *gin.Context) {
+		core.WriteResponse(c, errno.ErrPageNotFound, nil)
+
+	})
+
+	// 注册 /healthz handler.
+	g.GET("/healthz", func(c *gin.Context) {
+		log.C(c).Infow("Healthz function called")
+		core.WriteResponse(c, nil, map[string]string{"status": "ok"})
+
+		//c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	// 创建HTTP Server实例
+	httpsrv := &http.Server{Addr: viper.GetString("addr"), Handler: g}
+
+	// 运行HTTP服务器
+	log.Infow("Start to listening the incoming requests on http address", "addr", viper.GetString("addr"))
+
+	if err := httpsrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalw(err.Error())
+	}
+	// 等待中断信号优雅地关闭服务器（10 秒超时)。
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGTTIN, syscall.SIGTERM)
+	<-quit
+	// 创建 ctx 用于通知服务器 goroutine, 它有 10 秒时间完成当前正在处理的请求
+	ctx, cancle := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancle()
+	// 10 秒内优雅关闭服务（将未处理完的请求处理完再关闭服务），超过 10 秒就超时退出
+	if err := httpsrv.Shutdown(ctx); err != nil {
+		log.Errorw("Insecure Server forced to shutdown", "err", err)
+	}
+	log.Infow("Server exiting")
 
 	return nil
 }
