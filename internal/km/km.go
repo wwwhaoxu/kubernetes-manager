@@ -7,8 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"kubernetes-manager/internal/pkg/core"
-	"kubernetes-manager/internal/pkg/errno"
 	"kubernetes-manager/internal/pkg/log"
 	mw "kubernetes-manager/internal/pkg/middleware"
 	"net/http"
@@ -57,6 +55,12 @@ func NewKuberManagerCommand() *cobra.Command {
 
 // run 函数是实际的业务代码入口函数.
 func run() error {
+
+	// 初始化 store 层
+	if err := initStore(); err != nil {
+		return err
+	}
+
 	// 设置Gin模式
 	gin.SetMode(viper.GetString("runmode"))
 
@@ -65,19 +69,9 @@ func run() error {
 	mws := []gin.HandlerFunc{gin.Recovery(), mw.RequestID(), mw.Cors}
 	g.Use(mws...)
 
-	// 注册 404 Handler.
-	g.NoRoute(func(c *gin.Context) {
-		core.WriteResponse(c, errno.ErrPageNotFound, nil)
-
-	})
-
-	// 注册 /healthz handler.
-	g.GET("/healthz", func(c *gin.Context) {
-		log.C(c).Infow("Healthz function called")
-		core.WriteResponse(c, nil, map[string]string{"status": "ok"})
-
-		//c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
+	if err := installRoutes(g); err != nil {
+		return err
+	}
 
 	// 创建HTTP Server实例
 	httpsrv := &http.Server{Addr: viper.GetString("addr"), Handler: g}
