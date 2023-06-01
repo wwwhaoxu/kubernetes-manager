@@ -7,8 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"kubernetes-manager/internal/pkg/known"
 	"kubernetes-manager/internal/pkg/log"
 	mw "kubernetes-manager/internal/pkg/middleware"
+	"kubernetes-manager/pkg/token"
 	"net/http"
 	"os"
 	"os/signal"
@@ -61,6 +63,9 @@ func run() error {
 		return err
 	}
 
+	// 设置 token 包的签发密钥，用于 token 包 token 的签发和解析
+	token.Init(viper.GetString("jwt-secret"), known.XUsernameKey)
+
 	// 设置Gin模式
 	gin.SetMode(viper.GetString("runmode"))
 
@@ -69,6 +74,7 @@ func run() error {
 	mws := []gin.HandlerFunc{gin.Recovery(), mw.RequestID(), mw.Cors}
 	g.Use(mws...)
 
+	// 安装Routes
 	if err := installRoutes(g); err != nil {
 		return err
 	}

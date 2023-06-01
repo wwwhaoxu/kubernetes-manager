@@ -10,4 +10,10 @@ var (
 	ErrBind = &Errno{HTTP: 400, Code: "InvalidParameter.BindError", Message: "Error occurred while binding the request body to the struct."}
 	// ErrInvalidParameter 表示所有验证失败的错误.
 	ErrInvalidParameter = &Errno{HTTP: 400, Code: "InvalidParameter", Message: "Parameter verification failed."}
+
+	// ErrTokenInvalid 表示 JWT Token 格式错误.
+	ErrTokenInvalid = &Errno{HTTP: 401, Code: "AuthFailure.TokenInvalid", Message: "Token was invalid."}
+
+	// ErrSignToken 表示签发 JWT Token 时出错.
+	ErrSignToken = &Errno{HTTP: 401, Code: "AuthFailure.SignTokenError", Message: "Error occurred while signing the JSON web token."}
 )

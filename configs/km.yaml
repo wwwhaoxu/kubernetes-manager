@@ -22,3 +22,4 @@ db:
 # 通用配置
 addr: :8080
 runmode: debug
+jwt-secret: Rtg8BPKNEf2mB4mgvKONGPZZQSaJWNLijxR42qRgq0iBb5 # JWT 签发密钥

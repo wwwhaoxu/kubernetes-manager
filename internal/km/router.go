@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"kubernetes-manager/internal/km/controller/v1/user"
 	"kubernetes-manager/internal/km/store"
+	mw "kubernetes-manager/internal/pkg/middleware"
 
 	"kubernetes-manager/internal/pkg/core"
 	"kubernetes-manager/internal/pkg/errno"
@@ -24,6 +25,7 @@ func installRoutes(g *gin.Engine) error {
 	})
 
 	uc := user.New(store.S)
+	g.POST("/login", uc.Login)
 
 	// 创建路由v1分组
 	v1 := g.Group("v1")
@@ -32,6 +34,8 @@ func installRoutes(g *gin.Engine) error {
 		userv1 := v1.Group("/users")
 		{
 			userv1.POST("", uc.Create)
+			userv1.PUT(":name/change-password", uc.ChangePassword)
+			userv1.Use(mw.Authn())
 		}
 	}
 	return nil
