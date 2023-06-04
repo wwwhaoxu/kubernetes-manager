@@ -5,6 +5,7 @@ import (
 	"kubernetes-manager/internal/km/controller/v1/user"
 	"kubernetes-manager/internal/km/store"
 	mw "kubernetes-manager/internal/pkg/middleware"
+	"kubernetes-manager/pkg/auth"
 
 	"kubernetes-manager/internal/pkg/core"
 	"kubernetes-manager/internal/pkg/errno"
@@ -24,7 +25,11 @@ func installRoutes(g *gin.Engine) error {
 		core.WriteResponse(c, nil, map[string]string{"status": "ok"})
 	})
 
-	uc := user.New(store.S)
+	authz, err := auth.NewAuthz(store.S.DB())
+	if err != nil {
+		return err
+	}
+	uc := user.New(store.S, authz)
 	g.POST("/login", uc.Login)
 
 	// 创建路由v1分组
@@ -35,7 +40,8 @@ func installRoutes(g *gin.Engine) error {
 		{
 			userv1.POST("", uc.Create)
 			userv1.PUT(":name/change-password", uc.ChangePassword)
-			userv1.Use(mw.Authn())
+			userv1.Use(mw.Authn(), mw.Authz(authz))
+			userv1.GET(":name", uc.Get) // 获取用户详情
 		}
 	}
 	return nil

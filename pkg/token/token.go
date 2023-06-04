@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v4"
+	"kubernetes-manager/internal/pkg/log"
 	"sync"
 	"time"
 )
@@ -47,6 +48,7 @@ func Parse(tokenString string, key string) (string, error) {
 		}
 		return []byte(key), nil
 	})
+	log.Infow("token111", "token:", token)
 	// 解析失败
 	if err != nil {
 		return "", err
@@ -56,6 +58,7 @@ func Parse(tokenString string, key string) (string, error) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		identityKey = claims[config.identityKey].(string)
 	}
+	log.Infow(identityKey)
 	return identityKey, nil
 }
 
@@ -63,13 +66,14 @@ func Parse(tokenString string, key string) (string, error) {
 
 func ParseRequest(c *gin.Context) (string, error) {
 	header := c.Request.Header.Get("Authorization")
-
+	log.Infow(header)
 	if len(header) == 0 {
 		return "", ErrMissingHeader
 	}
 	var t string
 	// 从请求头中取出 token
 	fmt.Sscanf(header, "Bearer %s", &t)
+	log.Infow(t)
 	return Parse(t, config.key)
 }
 
@@ -84,7 +88,7 @@ func Sign(identityKey string) (tokenString string, err error) {
 		"exp":              time.Now().Add(10 * time.Hour).Unix(),
 	})
 	// 签发 token
-	tokenString, err = token.SignedString([]byte(config.identityKey))
+	tokenString, err = token.SignedString([]byte(config.key))
 
 	return
 }

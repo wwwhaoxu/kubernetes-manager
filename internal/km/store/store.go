@@ -13,6 +13,7 @@ var (
 
 // IStore 定义了 Store 层需要实现的方法.
 type IStore interface {
+	DB() *gorm.DB
 	Users() UserStore
 }
 
@@ -34,4 +35,8 @@ func NewStore(db *gorm.DB) *datastore {
 func (ds *datastore) Users() UserStore {
 	return newUsers(ds.db)
 
+}
+
+func (ds *datastore) DB() *gorm.DB {
+	return ds.db
 }

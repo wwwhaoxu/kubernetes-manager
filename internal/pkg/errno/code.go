@@ -16,4 +16,6 @@ var (
 
 	// ErrSignToken 表示签发 JWT Token 时出错.
 	ErrSignToken = &Errno{HTTP: 401, Code: "AuthFailure.SignTokenError", Message: "Error occurred while signing the JSON web token."}
+	// ErrUnauthorized 表示请求没有被授权.
+	ErrUnauthorized = &Errno{HTTP: 401, Code: "AuthFailure.Unauthorized", Message: "Unauthorized."}
 )

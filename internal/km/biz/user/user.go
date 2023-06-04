@@ -2,8 +2,11 @@ package user
 
 import (
 	"context"
+	"errors"
+	"gorm.io/gorm"
 	"kubernetes-manager/internal/km/store"
 	"kubernetes-manager/internal/pkg/errno"
+	"kubernetes-manager/internal/pkg/log"
 	"kubernetes-manager/internal/pkg/model"
 	v1 "kubernetes-manager/pkg/api/km/v1"
 	"kubernetes-manager/pkg/auth"
@@ -17,6 +20,8 @@ type UserBiz interface {
 	ChangePassword(ctx context.Context, username string, r *v1.ChangePasswordRequest) error
 	Login(ctx context.Context, r *v1.LoginRequest) (*v1.LoginResponse, error)
 	Create(ctx context.Context, r *v1.CreateUserRequest) error
+	Get(ctx context.Context, username string) (*v1.GetUserResponse, error)
+	List(ctx context.Context, offset, limit int) (*v1.ListUserResponse, error)
 }
 
 type userBiz struct {
@@ -79,4 +84,39 @@ func (b userBiz) Login(ctx context.Context, r *v1.LoginRequest) (*v1.LoginRespon
 		return nil, errno.ErrSignToken
 	}
 	return &v1.LoginResponse{Token: t}, nil
+}
+
+func (b userBiz) Get(ctx context.Context, username string) (*v1.GetUserResponse, error) {
+	user, err := b.ds.Users().Get(ctx, username)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errno.ErrUserNotFound
+		}
+		return nil, err
+	}
+	var resp v1.GetUserResponse
+	_ = copier.Copy(&resp, user)
+	resp.CreatedAt = user.CreatedAt.Format("2006-01-02 15:04:05")
+	resp.UpdatedAt = user.UpdatedAt.Format("2006-01-02 15:04:05")
+	return &resp, nil
+}
+
+func (b userBiz) List(ctx context.Context, offset, limit int) (*v1.ListUserResponse, error) {
+	count, list, err := b.ds.Users().List(ctx, offset, limit)
+	if err != nil {
+		log.C(ctx).Errorw("Failed to list users from storage", "err", err)
+	}
+	users := make([]*v1.UserInfo, 0, len(list))
+	for _, item := range list {
+		user := item
+		users = append(users, &v1.UserInfo{
+			Username:  user.Username,
+			Nickname:  user.Nickname,
+			Email:     user.Email,
+			Phone:     user.Phone,
+			CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt: user.UpdatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+	return &v1.ListUserResponse{Users: users, TotalCount: count}, nil
 }

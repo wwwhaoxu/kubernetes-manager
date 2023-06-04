@@ -23,3 +23,8 @@ db:
 addr: :8080
 runmode: debug
 jwt-secret: Rtg8BPKNEf2mB4mgvKONGPZZQSaJWNLijxR42qRgq0iBb5 # JWT 签发密钥
+
+
+# GRPC 相关配置
+grpc:
+  addr: :9090 # GRPC 服务器监听地址
