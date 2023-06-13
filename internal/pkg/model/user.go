@@ -13,8 +13,10 @@ type UserM struct {
 	Nickname  string    `gorm:"column:nickname"`       //
 	Email     string    `gorm:"column:email"`          //
 	Phone     string    `gorm:"column:phone"`          //
+	Role      string    `gorm:"column:role"`           //
 	CreatedAt time.Time `gorm:"column:createdAt"`      //
 	UpdatedAt time.Time `gorm:"column:updatedAt"`      //
+
 }
 
 // TableName sets the insert table name for this struct type

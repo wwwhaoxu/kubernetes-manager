@@ -26,6 +26,16 @@ func installRoutes(g *gin.Engine) error {
 	})
 
 	authz, err := auth.NewAuthz(store.S.DB())
+
+	// add policy
+	if hasPolicy := authz.HasPolicy("admin", "/v1/users", user.DefaultMethods); !hasPolicy {
+		authz.AddPolicy("admin", "/v1/users", user.DefaultMethods)
+	}
+
+	if hasPolicy := authz.HasPolicy("devops", "/v1/users", user.ReadMethods); !hasPolicy {
+		authz.AddPolicy("devops", "/v1/users/belma", user.ReadMethods)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -42,6 +52,7 @@ func installRoutes(g *gin.Engine) error {
 			userv1.PUT(":name/change-password", uc.ChangePassword)
 			userv1.Use(mw.Authn(), mw.Authz(authz))
 			userv1.GET(":name", uc.Get) // 获取用户详情
+			userv1.GET("", uc.List)
 		}
 	}
 	return nil

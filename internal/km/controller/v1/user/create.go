@@ -9,7 +9,10 @@ import (
 	v1 "kubernetes-manager/pkg/api/km/v1"
 )
 
-const defaultMethods = "(GET)|(POST)|(PUT)|(DELETE)"
+const (
+	DefaultMethods = "(GET)|(POST)|(PUT)|(DELETE)"
+	ReadMethods    = "(GET)"
+)
 
 // Create 创建一个新的用户.
 func (ctrl *UserController) Create(c *gin.Context) {
@@ -31,10 +34,15 @@ func (ctrl *UserController) Create(c *gin.Context) {
 		return
 	}
 
-	if _, err := ctrl.a.AddNamedPolicy("p", r.Username, "/v1/users/"+r.Username, defaultMethods); err != nil {
+	if _, err := ctrl.a.AddGroupingPolicy(r.Username, r.Role); err != nil {
 		core.WriteResponse(c, err, nil)
-
 		return
 	}
+
+	//if _, err := ctrl.a.AddNamedPolicy("p", r.Username, "/v1/users/"+r.Username, defaultMethods); err != nil {
+	//	core.WriteResponse(c, err, nil)
+	//
+	//	return
+	//}
 	core.WriteResponse(c, nil, nil)
 }

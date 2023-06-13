@@ -15,11 +15,26 @@ r = sub, obj, act
 [policy_definition]
 p = sub, obj, act
 
+[role_definition]
+g = _, _
+
 [policy_effect]
 e = some(where (p.eft == allow))
 
 [matchers]
-m = r.sub == p.sub && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act)`
+m = g(r.sub, p.sub) && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act)`
+
+	//	aclModel = `[request_definition]
+	//r = sub, obj, act
+	//
+	//[policy_definition]
+	//p = sub, obj, act
+	//
+	//[policy_effect]
+	//e = some(where (p.eft == allow))
+	//
+	//[matchers]
+	//m = r.sub == p.sub && keyMatch(r.obj, p.obj) && regexMatch(r.act, p.act)`
 )
 
 // Authz 定义了一个授权器，提供授权功能.
@@ -42,12 +57,13 @@ func NewAuthz(db *gorm.DB) (*Authz, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// Load the policy from DB.
 	if err := enforcer.LoadPolicy(); err != nil {
 		return nil, err
 	}
 
-	enforcer.StartAutoLoadPolicy(180 * time.Second)
+	enforcer.StartAutoLoadPolicy(5 * time.Second)
 
 	a := &Authz{enforcer}
 	return a, nil
