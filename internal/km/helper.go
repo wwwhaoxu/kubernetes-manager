@@ -3,9 +3,11 @@ package km
 import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"kubernetes-manager/internal/km/controller/v1/kuberesource"
 	"kubernetes-manager/internal/km/store"
 	"kubernetes-manager/internal/pkg/log"
 	"kubernetes-manager/pkg/db"
+	"kubernetes-manager/pkg/kubernetes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -76,4 +78,16 @@ func initStore() error {
 	_ = store.NewStore(ins)
 
 	return nil
+}
+
+func initKubeClient() error {
+
+	client, err := kubernetes.NewK8sConfig("test")
+	if err != nil {
+		return err
+	}
+	_ = kuberesource.New(client)
+
+	return nil
+
 }

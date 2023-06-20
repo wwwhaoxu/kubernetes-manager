@@ -2,6 +2,7 @@ package km
 
 import (
 	"github.com/gin-gonic/gin"
+	"kubernetes-manager/internal/km/controller/v1/kuberesource"
 	"kubernetes-manager/internal/km/controller/v1/user"
 	"kubernetes-manager/internal/km/store"
 	mw "kubernetes-manager/internal/pkg/middleware"
@@ -28,11 +29,11 @@ func installRoutes(g *gin.Engine) error {
 	authz, err := auth.NewAuthz(store.S.DB())
 
 	// add policy
-	if hasPolicy := authz.HasPolicy("admin", "/v1/users", user.DefaultMethods); !hasPolicy {
-		authz.AddPolicy("admin", "/v1/users", user.DefaultMethods)
+	if hasPolicy := authz.HasPolicy("admin", "/v1", user.DefaultMethods); !hasPolicy {
+		authz.AddPolicy("admin", "/v1", user.DefaultMethods)
 	}
 
-	if hasPolicy := authz.HasPolicy("devops", "/v1/users", user.ReadMethods); !hasPolicy {
+	if hasPolicy := authz.HasPolicy("devops", "/v1/users/belma", user.ReadMethods); !hasPolicy {
 		authz.AddPolicy("devops", "/v1/users/belma", user.ReadMethods)
 	}
 
@@ -54,6 +55,13 @@ func installRoutes(g *gin.Engine) error {
 			userv1.GET(":name", uc.Get) // 获取用户详情
 			userv1.GET("", uc.List)
 		}
+		//  create route that get deployment
+		kuberesourcev1 := v1.Group("/kuberesource")
+		{
+			kuberesourcev1.Use(mw.Authn(), mw.Authz(authz))
+			kuberesourcev1.GET(":namespace", kuberesource.K.Get)
+		}
 	}
+
 	return nil
 }
