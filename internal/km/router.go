@@ -29,12 +29,12 @@ func installRoutes(g *gin.Engine) error {
 	authz, err := auth.NewAuthz(store.S.DB())
 
 	// add policy
-	if hasPolicy := authz.HasPolicy("admin", "/v1", user.DefaultMethods); !hasPolicy {
+	if hasPolicy := authz.HasPolicy("admin", "/v1/*", user.DefaultMethods); !hasPolicy {
 		authz.AddPolicy("admin", "/v1", user.DefaultMethods)
 	}
 
-	if hasPolicy := authz.HasPolicy("devops", "/v1/users/belma", user.ReadMethods); !hasPolicy {
-		authz.AddPolicy("devops", "/v1/users/belma", user.ReadMethods)
+	if hasPolicy := authz.HasPolicy("devops", "/v1/users/herry", user.ReadMethods); !hasPolicy {
+		authz.AddPolicy("devops", "/v1/users/herry", user.ReadMethods)
 	}
 
 	if err != nil {
